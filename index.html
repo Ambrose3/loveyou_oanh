@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gửi Oanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="confession-screen" aria-label="Lời tỏ tình gửi Oanh">
+      <canvas id="night-canvas" aria-hidden="true"></canvas>
+
+      <section class="confession-card">
+        <p class="soft-date">29.06.2026</p>
+        <h1>Oanh ơi</h1>
+
+        <div class="line-box" aria-live="polite">
+          <p id="fading-line">Anh có một điều muốn nói với em...</p>
+        </div>
+
+        <p class="main-question">Làm người yêu anh nhé?</p>
+
+        <div class="answer-row" aria-label="Chọn câu trả lời">
+          <button id="yes-btn" class="answer-btn yes" type="button">
+            Đồng ý
+          </button>
+          <button id="no-btn" class="answer-btn no" type="button">
+            Để em nghĩ đã
+          </button>
+        </div>
+
+        <p id="final-message" class="final-message" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,181 @@
+const lines = [
+  "Anh không biết nói sao cho thật hay...",
+  "Chỉ là từ lúc có em, mọi thứ dịu dàng hơn một chút.",
+  "Anh muốn được nghe em kể chuyện mỗi ngày.",
+  "Muốn được dỗ em khi em buồn, chọc em cười khi em im lặng.",
+  "Và muốn được gọi em là người yêu của anh.",
+];
+
+const reconsiderLines = [
+  "Nghĩ lại đi mà...",
+  "Chọn đồng ý xinh hơn đó.",
+  "Anh đang hồi hộp thật sự luôn.",
+  "Đừng bỏ anh đứng đây lâu quá nha.",
+  "Một lần đồng ý thôi, anh vui cả ngày.",
+  "Tim anh đang chờ em bấm đó.",
+];
+
+const canvas = document.querySelector("#night-canvas");
+const ctx = canvas.getContext("2d");
+const fadingLine = document.querySelector("#fading-line");
+const yesBtn = document.querySelector("#yes-btn");
+const noBtn = document.querySelector("#no-btn");
+const finalMessage = document.querySelector("#final-message");
+
+let stars = [];
+let hearts = [];
+let lineIndex = 0;
+let noClickCount = 0;
+
+function resizeCanvas() {
+  const ratio = window.devicePixelRatio || 1;
+
+  canvas.width = window.innerWidth * ratio;
+  canvas.height = window.innerHeight * ratio;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  createStars();
+}
+
+function randomBetween(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function createStars() {
+  const count = Math.min(150, Math.floor((window.innerWidth * window.innerHeight) / 7000));
+
+  stars = Array.from({ length: count }, () => ({
+    x: randomBetween(0, window.innerWidth),
+    y: randomBetween(0, window.innerHeight),
+    size: randomBetween(0.6, 2.2),
+    alpha: randomBetween(0.18, 0.72),
+    pulse: randomBetween(0, Math.PI * 2),
+  }));
+}
+
+function drawHeart(x, y, size, alpha, rotation = 0) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  ctx.scale(size / 24, size / 24);
+  ctx.beginPath();
+  ctx.moveTo(0, 8);
+  ctx.bezierCurveTo(-16, -4, -8, -18, 0, -8);
+  ctx.bezierCurveTo(8, -18, 16, -4, 0, 8);
+  ctx.fillStyle = `rgba(255, 111, 174, ${alpha})`;
+  ctx.shadowColor = "rgba(255, 63, 141, 0.8)";
+  ctx.shadowBlur = 18;
+  ctx.fill();
+  ctx.restore();
+}
+
+function spawnHearts(x, y, count = 18) {
+  for (let i = 0; i < count; i += 1) {
+    hearts.push({
+      x,
+      y,
+      vx: randomBetween(-2.2, 2.2),
+      vy: randomBetween(-4.5, -1.3),
+      size: randomBetween(9, 20),
+      alpha: randomBetween(0.54, 0.95),
+      spin: randomBetween(-0.04, 0.04),
+      rotation: randomBetween(-0.6, 0.6),
+      life: 1,
+    });
+  }
+}
+
+function animate() {
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+  stars.forEach((star) => {
+    const alpha = star.alpha + Math.sin(Date.now() * 0.0015 + star.pulse) * 0.18;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.05, alpha)})`;
+    ctx.fill();
+  });
+
+  hearts = hearts.filter((heart) => heart.life > 0);
+  hearts.forEach((heart) => {
+    heart.x += heart.vx;
+    heart.y += heart.vy;
+    heart.vy += 0.035;
+    heart.rotation += heart.spin;
+    heart.life -= 0.012;
+    drawHeart(heart.x, heart.y, heart.size, heart.alpha * heart.life, heart.rotation);
+  });
+
+  requestAnimationFrame(animate);
+}
+
+function cycleLines() {
+  fadingLine.classList.add("is-fading");
+
+  window.setTimeout(() => {
+    lineIndex = (lineIndex + 1) % lines.length;
+    fadingLine.textContent = lines[lineIndex];
+    fadingLine.classList.remove("is-fading");
+  }, 720);
+}
+
+function showFinalMessage(text) {
+  finalMessage.textContent = text;
+  finalMessage.classList.add("show");
+}
+
+function showPlea(text, x, y) {
+  const plea = document.createElement("span");
+  plea.className = "plea-text";
+  plea.textContent = text;
+  plea.style.left = `${x}px`;
+  plea.style.top = `${y}px`;
+  document.body.appendChild(plea);
+  window.setTimeout(() => plea.remove(), 2800);
+}
+
+function moveNoButton() {
+  const scale = Math.max(0.34, 1 - noClickCount * 0.13);
+  const padding = 18;
+  const safeTop = Math.max(18, window.innerHeight * 0.12);
+  const safeBottom = window.innerHeight - noBtn.offsetHeight * scale - padding;
+  const safeRight = window.innerWidth - noBtn.offsetWidth * scale - padding;
+  const x = randomBetween(padding, Math.max(padding, safeRight));
+  const y = randomBetween(safeTop, Math.max(safeTop, safeBottom));
+
+  noBtn.classList.add("is-moving");
+  noBtn.style.setProperty("--btn-scale", scale.toFixed(2));
+  noBtn.style.left = `${x}px`;
+  noBtn.style.top = `${y}px`;
+  noBtn.style.opacity = noClickCount > 6 ? "0.72" : "1";
+}
+
+yesBtn.addEventListener("click", () => {
+  const rect = yesBtn.getBoundingClientRect();
+  spawnHearts(rect.left + rect.width / 2, rect.top + rect.height / 2, 34);
+  showFinalMessage("Vậy từ hôm nay, để anh thương em thật nhiều nhé.");
+});
+
+noBtn.addEventListener("click", () => {
+  noClickCount += 1;
+
+  const rect = noBtn.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+  const message = reconsiderLines[(noClickCount - 1) % reconsiderLines.length];
+
+  spawnHearts(x, y, 10);
+  showPlea(message, x, y - 18);
+  showFinalMessage(noClickCount < 4 ? "Nghĩ lại xíu thôi nha..." : "Nút này càng bấm càng bé đó, quay lại đồng ý đi mà.");
+  moveNoButton();
+});
+
+document.addEventListener("pointerdown", (event) => {
+  if (event.target.closest("button")) return;
+  spawnHearts(event.clientX, event.clientY, 8);
+});
+
+window.addEventListener("resize", resizeCanvas);
+
+resizeCanvas();
+animate();
+window.setInterval(cycleLines, 3000);
