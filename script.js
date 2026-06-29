@@ -21,6 +21,8 @@ const fadingLine = document.querySelector("#fading-line");
 const yesBtn = document.querySelector("#yes-btn");
 const noBtn = document.querySelector("#no-btn");
 const finalMessage = document.querySelector("#final-message");
+const bgMusic = document.querySelector("#bg-music");
+const musicToggle = document.querySelector("#music-toggle");
 
 let stars = [];
 let hearts = [];
@@ -30,6 +32,8 @@ let lineIndex = 0;
 let noClickCount = 0;
 let loveMode = false;
 let loveStart = 0;
+let musicStarted = false;
+let musicUnavailable = false;
 
 function resizeCanvas() {
   const ratio = window.devicePixelRatio || 1;
@@ -288,6 +292,44 @@ function showPlea(text, x, y) {
   window.setTimeout(() => plea.remove(), 2800);
 }
 
+function updateMusicButton() {
+  if (!musicToggle || !bgMusic) return;
+
+  musicToggle.classList.toggle("is-playing", !bgMusic.paused);
+  musicToggle.classList.toggle("is-unavailable", musicUnavailable);
+  musicToggle.setAttribute("aria-pressed", String(!bgMusic.paused));
+  musicToggle.setAttribute(
+    "aria-label",
+    bgMusic.paused ? "Bật nhạc nền" : "Tắt nhạc nền"
+  );
+}
+
+function startMusic() {
+  if (!bgMusic || musicUnavailable) return;
+
+  bgMusic.volume = 0.62;
+  bgMusic.play()
+    .then(() => {
+      musicStarted = true;
+      updateMusicButton();
+    })
+    .catch(() => {
+      updateMusicButton();
+    });
+}
+
+function toggleMusic() {
+  if (!bgMusic || musicUnavailable) return;
+
+  if (bgMusic.paused) {
+    startMusic();
+    return;
+  }
+
+  bgMusic.pause();
+  updateMusicButton();
+}
+
 function moveNoButton() {
   const scale = Math.max(0.34, 1 - noClickCount * 0.13);
   const padding = 18;
@@ -309,6 +351,7 @@ yesBtn.addEventListener("click", () => {
   loveStart = performance.now();
   document.body.classList.add("is-accepted");
   createLoveHeart();
+  startMusic();
   showFinalMessage("Vậy từ hôm nay, để anh thương em thật nhiều nhé.");
 });
 
@@ -327,10 +370,30 @@ noBtn.addEventListener("click", () => {
 });
 
 document.addEventListener("pointerdown", (event) => {
+  if (!musicStarted) {
+    startMusic();
+  }
+
   if (loveMode) return;
   if (event.target.closest("button")) return;
   spawnHearts(event.clientX, event.clientY, 8);
 });
+
+if (musicToggle) {
+  musicToggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleMusic();
+  });
+}
+
+if (bgMusic) {
+  bgMusic.addEventListener("play", updateMusicButton);
+  bgMusic.addEventListener("pause", updateMusicButton);
+  bgMusic.addEventListener("error", () => {
+    musicUnavailable = true;
+    updateMusicButton();
+  });
+}
 
 window.addEventListener("resize", resizeCanvas);
 window.addEventListener("resize", () => {
