@@ -25,7 +25,7 @@ const finalMessage = document.querySelector("#final-message");
 let stars = [];
 let hearts = [];
 let loveParticles = [];
-let loveConstellations = [];
+let loveStreaks = [];
 let lineIndex = 0;
 let noClickCount = 0;
 let loveMode = false;
@@ -101,138 +101,143 @@ function getHeartPoint(t) {
   return { x, y };
 }
 
-function createLoveConstellations(width, height) {
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const groupCount = width < 620 ? 7 : 11;
-  const minCenterGap = Math.min(width, height) * 0.22;
-
-  return Array.from({ length: groupCount }, () => {
-    let anchorX = randomBetween(width * 0.08, width * 0.92);
-    let anchorY = randomBetween(height * 0.1, height * 0.9);
-
-    for (let i = 0; i < 16; i += 1) {
-      const dx = anchorX - centerX;
-      const dy = anchorY - centerY;
-
-      if (Math.hypot(dx, dy) > minCenterGap) break;
-      anchorX = randomBetween(width * 0.08, width * 0.92);
-      anchorY = randomBetween(height * 0.1, height * 0.9);
-    }
-
-    const nodeCount = Math.floor(randomBetween(5, 9));
-    const nodes = Array.from({ length: nodeCount }, () => {
-      const angle = randomBetween(0, Math.PI * 2);
-      const radius = randomBetween(18, Math.min(width, height) * 0.105);
-
-      return {
-        x: Math.min(width - 22, Math.max(22, anchorX + Math.cos(angle) * radius)),
-        y: Math.min(height - 22, Math.max(22, anchorY + Math.sin(angle) * radius)),
-      };
-    });
-
-    const links = nodes.slice(1).map((_, index) => [index, index + 1]);
-
-    if (nodes.length > 4) {
-      links.push([0, 3], [1, nodes.length - 1]);
-    }
-
-    return { nodes, links };
-  });
-}
-
 function createLoveHeart() {
   const width = window.innerWidth;
   const height = window.innerHeight;
   const centerX = width / 2;
-  const centerY = height * (width < 620 ? 0.51 : 0.52);
-  const scale = Math.min(width * 0.025, height * 0.031, 23);
-  const particleCount = Math.min(4600, Math.max(2200, Math.floor((width * height) / 210)));
-  const outlineCount = Math.floor(particleCount * 0.28);
-
-  loveConstellations = createLoveConstellations(width, height);
+  const centerY = height * (width < 620 ? 0.47 : 0.47);
+  const baseY = height * (width < 620 ? 0.82 : 0.8);
+  const scale = Math.min(width * 0.019, height * 0.024, 17.8);
+  const particleCount = Math.min(3900, Math.max(2100, Math.floor((width * height) / 250)));
+  const outlineCount = Math.floor(particleCount * 0.46);
+  const baseWidth = Math.min(width * 0.31, 320);
 
   loveParticles = Array.from({ length: particleCount }, (_, index) => {
     const isOutline = index < outlineCount;
     const t = randomBetween(0, Math.PI * 2);
     const point = getHeartPoint(t);
-    const depth = randomBetween(-1, 1);
+    const depth = randomBetween(-1.25, 1.25);
     const fill = isOutline
-      ? randomBetween(0.93, 1.05)
-      : Math.sqrt(Math.random()) * randomBetween(0.12, 0.97);
-    const depthScale = 1 + depth * 0.08;
-    const targetX = centerX + point.x * scale * fill * depthScale + depth * 8 + randomBetween(-0.9, 0.9);
-    const targetY = centerY + point.y * scale * fill * depthScale - depth * 6 + randomBetween(-0.9, 0.9);
-    const group = loveConstellations[Math.floor(randomBetween(0, loveConstellations.length))];
-    const node = group.nodes[Math.floor(randomBetween(0, group.nodes.length))];
+      ? randomBetween(0.93, 1.04)
+      : Math.sqrt(Math.random()) * randomBetween(0.16, 0.94);
+    const modelX = point.x * scale * fill * (1 + depth * 0.045);
+    const modelY = point.y * scale * fill * (1 - depth * 0.025);
+    const modelZ = depth * scale * 5.8 * fill;
+    const baseAngle = randomBetween(0, Math.PI * 2);
+    const baseRadius = Math.sqrt(Math.random()) * baseWidth * 0.54;
 
     return {
-      x: node.x + randomBetween(-18, 18),
-      y: node.y + randomBetween(-18, 18),
-      tx: targetX,
-      ty: targetY,
-      size: isOutline ? randomBetween(1.25, 2.35) : randomBetween(0.72, 1.82),
-      alpha: isOutline ? randomBetween(0.78, 1) : randomBetween(0.42, 0.9),
-      delay: randomBetween(0, 0.32),
+      sx: centerX + randomBetween(-width * 0.24, width * 0.24),
+      sy: randomBetween(-height * 0.42, height * 0.08),
+      bx: centerX + Math.cos(baseAngle) * baseRadius + randomBetween(-10, 10),
+      by: baseY + Math.sin(baseAngle) * baseRadius * 0.18 + randomBetween(-5, 5),
+      mx: modelX,
+      my: modelY,
+      mz: modelZ,
+      size: isOutline ? randomBetween(1.35, 2.35) : randomBetween(0.7, 1.62),
+      alpha: isOutline ? randomBetween(0.84, 1) : randomBetween(0.32, 0.82),
+      delay: randomBetween(0, 0.26),
       twinkle: randomBetween(0, Math.PI * 2),
-      drift: randomBetween(0.5, 1.8),
+      drift: randomBetween(0.55, 1.9),
       depth,
       colorShift: Math.random(),
     };
   });
+
+  loveStreaks = Array.from({ length: width < 620 ? 34 : 58 }, () => ({
+    x: centerX + randomBetween(-baseWidth * 0.48, baseWidth * 0.48),
+    targetX: centerX + randomBetween(-baseWidth * 0.28, baseWidth * 0.28),
+    y: baseY + randomBetween(-8, 10),
+    height: randomBetween(height * 0.18, height * 0.34),
+    bend: randomBetween(-46, 46),
+    phase: randomBetween(0, Math.PI * 2),
+    alpha: randomBetween(0.22, 0.68),
+  }));
 }
 
 function easeOutCubic(value) {
   return 1 - Math.pow(1 - value, 3);
 }
 
-function drawHeartSilhouette(centerX, centerY, scale, beat, formed) {
-  if (formed < 0.42) return;
+function easeInOutCubic(value) {
+  return value < 0.5
+    ? 4 * value * value * value
+    : 1 - Math.pow(-2 * value + 2, 3) / 2;
+}
 
-  const alpha = Math.min(0.18, (formed - 0.42) * 0.32);
+function clamp01(value) {
+  return Math.max(0, Math.min(1, value));
+}
+
+function projectHeartParticle(particle, centerX, centerY, time, beat) {
+  const rotation = Math.sin(time * 0.62) * 0.18;
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  const x3 = particle.mx * cos - particle.mz * sin;
+  const z3 = particle.mx * sin + particle.mz * cos;
+  const perspective = 520 / (520 + z3);
+
+  return {
+    x: centerX + x3 * perspective * beat,
+    y: centerY + particle.my * perspective * beat,
+    z: z3,
+    scale: perspective,
+  };
+}
+
+function drawPortalBase(centerX, baseY, time, strength) {
+  const width = Math.min(window.innerWidth * 0.31, 320);
+  const glow = ctx.createRadialGradient(centerX, baseY, 8, centerX, baseY, width * 0.72);
+
+  glow.addColorStop(0, `rgba(213, 250, 255, ${0.86 * strength})`);
+  glow.addColorStop(0.25, `rgba(76, 213, 255, ${0.62 * strength})`);
+  glow.addColorStop(0.58, `rgba(0, 128, 255, ${0.24 * strength})`);
+  glow.addColorStop(1, "rgba(0, 80, 255, 0)");
 
   ctx.save();
-  ctx.translate(centerX, centerY);
-  ctx.scale(scale * beat, scale * beat);
+  ctx.fillStyle = glow;
   ctx.beginPath();
+  ctx.ellipse(centerX, baseY, width * 0.56, width * 0.105, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-  for (let i = 0; i <= 160; i += 1) {
-    const point = getHeartPoint((Math.PI * 2 * i) / 160);
+  for (let i = 0; i < 5; i += 1) {
+    const pulse = Math.sin(time * 2.8 + i * 1.7) * 0.08;
 
-    if (i === 0) {
-      ctx.moveTo(point.x, point.y);
-    } else {
-      ctx.lineTo(point.x, point.y);
-    }
+    ctx.beginPath();
+    ctx.ellipse(
+      centerX,
+      baseY + Math.sin(time * 2 + i) * 2,
+      width * (0.4 + i * 0.045 + pulse),
+      width * (0.052 + i * 0.01),
+      time * 0.52 + i * 0.58,
+      0,
+      Math.PI * 2
+    );
+    ctx.strokeStyle = `rgba(118, 229, 255, ${(0.72 - i * 0.1) * strength})`;
+    ctx.lineWidth = 2.3 - i * 0.18;
+    ctx.shadowColor = "rgba(76, 213, 255, 0.95)";
+    ctx.shadowBlur = 16;
+    ctx.stroke();
   }
 
-  ctx.closePath();
-  ctx.fillStyle = `rgba(22, 184, 255, ${alpha})`;
-  ctx.shadowColor = "rgba(55, 203, 255, 0.72)";
-  ctx.shadowBlur = 1.55;
-  ctx.fill();
   ctx.restore();
 }
 
-function drawConstellationLines(formed, time) {
-  if (formed > 0.9) return;
+function drawEnergyStreaks(baseY, time, amount) {
+  if (amount <= 0) return;
 
-  const alpha = (1 - formed / 0.9) * 0.42;
+  loveStreaks.forEach((streak) => {
+    const shimmer = 0.72 + Math.sin(time * 5.2 + streak.phase) * 0.28;
+    const topY = streak.y - streak.height * amount;
 
-  loveConstellations.forEach((group) => {
-    group.links.forEach(([fromIndex, toIndex]) => {
-      const from = group.nodes[fromIndex];
-      const to = group.nodes[toIndex];
-
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
-      ctx.strokeStyle = `rgba(123, 222, 255, ${alpha * (0.72 + Math.sin(time * 3) * 0.18)})`;
-      ctx.lineWidth = 1;
-      ctx.shadowColor = "rgba(91, 211, 255, 0.72)";
-      ctx.shadowBlur = 8;
-      ctx.stroke();
-    });
+    ctx.beginPath();
+    ctx.moveTo(streak.x, streak.y);
+    ctx.quadraticCurveTo(streak.x + streak.bend, streak.y - streak.height * 0.45, streak.targetX, topY);
+    ctx.strokeStyle = `rgba(122, 229, 255, ${streak.alpha * amount * shimmer})`;
+    ctx.lineWidth = 1.1 + shimmer * 0.8;
+    ctx.shadowColor = "rgba(91, 219, 255, 0.95)";
+    ctx.shadowBlur = 12;
+    ctx.stroke();
   });
 }
 
@@ -241,28 +246,49 @@ function drawLoveHeart() {
   const width = window.innerWidth;
   const height = window.innerHeight;
   const centerX = width / 2;
-  const centerY = height * (width < 620 ? 0.51 : 0.52);
-  const heartScale = Math.min(width * 0.025, height * 0.031, 23);
-  const formed = Math.min(1, elapsed / 2.45);
-  const heartBeat = formed >= 0.98 ? 1 + Math.sin(elapsed * 7.2) * 0.035 : 1;
+  const centerY = height * (width < 620 ? 0.47 : 0.47);
+  const baseY = height * (width < 620 ? 0.82 : 0.8);
+  const fallProgress = easeInOutCubic(clamp01(elapsed / 1.45));
+  const riseProgress = easeOutCubic(clamp01((elapsed - 1.05) / 2.35));
+  const formed = clamp01((elapsed - 3.1) / 0.8);
+  const heartBeat = formed > 0 ? 1 + Math.sin(elapsed * 7.4) * 0.038 * formed : 1;
+  const baseStrength = Math.min(1, 0.35 + elapsed * 0.72);
 
-  drawConstellationLines(formed, elapsed);
-  drawHeartSilhouette(centerX, centerY, heartScale, heartBeat, formed);
+  drawPortalBase(centerX, baseY, elapsed, baseStrength);
+  drawEnergyStreaks(baseY, elapsed, clamp01((elapsed - 1.05) / 1.4) * (1 - formed));
 
   loveParticles.forEach((particle) => {
-    const progress = easeOutCubic(Math.min(1, Math.max(0, (formed - particle.delay) / (1 - particle.delay))));
-    const pulse = formed >= 0.98 ? heartBeat : 1;
-    const targetX = centerX + (particle.tx - centerX) * pulse;
-    const targetY = centerY + (particle.ty - centerY) * pulse;
-    const x = particle.x + (targetX - particle.x) * progress;
-    const y = particle.y + (targetY - particle.y) * progress;
+    const particleRise = easeOutCubic(clamp01((riseProgress - particle.delay) / (1 - particle.delay)));
+    const projected = projectHeartParticle(particle, centerX, centerY, elapsed, heartBeat);
+    const baseX = particle.sx + (particle.bx - particle.sx) * fallProgress;
+    const baseFallY = particle.sy + (particle.by - particle.sy) * fallProgress;
+    const x = baseX + (projected.x - baseX) * particleRise;
+    const y = baseFallY + (projected.y - baseFallY) * particleRise;
     const shimmer = 0.72 + Math.sin(elapsed * 5 + particle.twinkle) * 0.28;
-    const floatX = formed >= 0.98 ? Math.sin(elapsed * particle.drift + particle.twinkle) * 1.2 : 0;
-    const floatY = formed >= 0.98 ? Math.cos(elapsed * particle.drift + particle.twinkle) * 1.1 : 0;
-    const depthGlow = 1 + particle.depth * 0.16;
+    const floatX = formed > 0 ? Math.sin(elapsed * particle.drift + particle.twinkle) * formed * 1.5 : 0;
+    const floatY = formed > 0 ? Math.cos(elapsed * particle.drift + particle.twinkle) * formed * 1.2 : 0;
+    const depthGlow = 1 + particle.depth * 0.12 + projected.scale * 0.18;
+    const trailAlpha = (1 - particleRise) * fallProgress * 0.38;
+
+    if (trailAlpha > 0.02) {
+      ctx.beginPath();
+      ctx.moveTo(x, y - 22);
+      ctx.lineTo(x, y + 6);
+      ctx.strokeStyle = `rgba(118, 229, 255, ${trailAlpha})`;
+      ctx.lineWidth = Math.max(0.6, particle.size * 0.45);
+      ctx.shadowColor = "rgba(76, 213, 255, 0.8)";
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+    }
 
     ctx.beginPath();
-    ctx.arc(x + floatX, y + floatY, particle.size * depthGlow * (0.9 + progress * 0.5), 0, Math.PI * 2);
+    ctx.arc(
+      x + floatX,
+      y + floatY,
+      particle.size * depthGlow * (0.78 + particleRise * 0.5),
+      0,
+      Math.PI * 2
+    );
     ctx.fillStyle =
       particle.colorShift > 0.74
         ? `rgba(240, 252, 255, ${particle.alpha * shimmer})`
@@ -270,7 +296,7 @@ function drawLoveHeart() {
     ctx.shadowColor = particle.colorShift > 0.72
       ? "rgba(235, 252, 255, 0.95)"
       : "rgba(48, 189, 255, 0.95)";
-    ctx.shadowBlur = formed > 0.96 ? 18 : 12;
+    ctx.shadowBlur = particleRise > 0.85 ? 16 : 10;
     ctx.fill();
   });
 }
@@ -367,6 +393,7 @@ noBtn.addEventListener("click", () => {
 });
 
 document.addEventListener("pointerdown", (event) => {
+  if (loveMode) return;
   if (event.target.closest("button")) return;
   spawnHearts(event.clientX, event.clientY, 8);
 });
